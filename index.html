@@ -3,313 +3,462 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>STEM Night — Train Your Own AI (Ball vs Cup)</title>
+  <title>STEM Night – Teachable Machine: Ball vs Cup</title>
 
-  <!-- TensorFlow.js + MobileNet + KNN Classifier (CDN builds) -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.13.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@1.2.2"></script>
+  <!-- TFJS + Teachable Machine (Image) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.13.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
   <style>
     :root{
-      --bg:#0f172a; --panel:#111827; --text:#e5e7eb; --muted:#94a3b8;
-      --a:#60a5fa; --b:#22c55e; --warn:#f59e0b; --danger:#ef4444;
+      --bg:#0f172a;      /* slate-900 */
+      --card:#111827;    /* gray-900 */
+      --text:#e5e7eb;    /* gray-200 */
+      --muted:#94a3b8;   /* slate-400 */
+      --accent:#22c55e;  /* green-500 */
+      --accent2:#60a5fa; /* blue-400 */
+      --warn:#f59e0b;    /* amber-500 */
+      --danger:#ef4444;  /* red-500 */
     }
     *{box-sizing:border-box}
-    body{margin:0;background:radial-gradient(1200px 600px at 10% -20%, #1f2937, transparent), var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui}
-    header{padding:24px 16px;text-align:center}
-    h1{margin:0 0 8px;font-size:clamp(24px,3vw,36px)}
-    .sub{color:var(--muted)}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    .grid{display:grid;gap:16px;grid-template-columns:1.2fr 1fr}
-    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% -20%, #1f2937, transparent),
+                  radial-gradient(1000px 500px at 110% 0%, #1f2937, transparent),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:24px 16px; text-align:center;
+    }
+    h1{margin:0 0 6px; font-size:clamp(24px,3vw,36px)}
+    .sub{color:var(--muted); font-size:clamp(14px,2vw,16px)}
+    .wrap{max-width:1100px; margin:0 auto; padding:16px}
+    .grid{
+      display:grid; gap:16px;
+      grid-template-columns: 1.2fr 1fr;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns: 1fr} }
 
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:16px; padding:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
 
-    .stage{display:grid;gap:12px;grid-template-rows:auto 1fr auto}
-    .videoWrap{position:relative;border-radius:16px;overflow:hidden;background:#000;min-height:320px;
-      display:flex;align-items:center;justify-content:center}
-    video,canvas{max-width:100%;height:auto;display:block}
-    .badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.1);
-      border:1px solid rgba(255,255,255,.2);padding:6px 10px;border-radius:999px;font-size:12px}
-    .controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-    button,label.button{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.18);color:var(--text);padding:10px 14px;border-radius:12px;font-weight:700;
-      cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:8px}
-    button:hover,label.button:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.35)}
-    button.primary{border-color:rgba(96,165,250,.7)}
-    button.good{border-color:rgba(34,197,94,.6)}
-    button.warn{border-color:rgba(245,158,11,.6)}
-    button.danger{border-color:rgba(239,68,68,.6)}
-    input[type=file]{display:none}
+    /* left column */
+    .stage{
+      display:grid; gap:12px;
+      grid-template-rows: auto 1fr auto;
+      min-height:520px;
+    }
+    .videoWrap{
+      position:relative; border-radius:16px; overflow:hidden;
+      background:#000; min-height:320px; display:flex; align-items:center; justify-content:center;
+    }
+    canvas, video{max-width:100%; height:auto; display:block}
+    .overlay{
+      position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center;
+      font-size:80px; font-weight:700; text-shadow:0 6px 24px rgba(0,0,0,0.6);
+    }
+    .badge{
+      position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.1);
+      border:1px solid rgba(255,255,255,0.2); padding:6px 10px; border-radius:999px; font-size:12px
+    }
+    .controls{
+      display:flex; flex-wrap:wrap; gap:10px; justify-content:center
+    }
+    button, label.button{
+      background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.18); color:var(--text);
+      padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer;
+      transition:transform .08s ease, box-shadow .2s ease, background .2s ease;
+      user-select:none; text-align:center; display:inline-flex; gap:8px; align-items:center;
+    }
+    button:hover, label.button:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(0,0,0,.35) }
+    button.primary{ border-color:rgba(34,197,94,.6); }
+    button.warn{ border-color:rgba(245,158,11,.6); }
+    button.ghost{ background:transparent; border-color:rgba(255,255,255,.12) }
 
-    .pred{display:grid;gap:14px}
-    .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px;border-radius:12px;
-      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
-    .label{display:flex;gap:10px;align-items:center;font-weight:800;font-size:18px}
-    .emoji{font-size:30px}
-    .bar{width:100%;height:14px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
-    .bar > span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--a),var(--b));transition:width .3s ease}
-    .pct{min-width:64px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
-    .chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:4px 8px;border-radius:999px;font-size:12px}
-    .count{font-weight:800}
-    .howto{color:var(--muted);font-size:14px}
-    .howto ul{margin:8px 0 0 18px}
+    /* right column: predictions + game */
+    .pred{
+      display:grid; gap:14px;
+    }
+    .row{
+      display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center;
+      padding:10px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,.08)
+    }
+    .label{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px }
+    .label .emoji{ font-size:30px }
+    .bar{
+      width:100%; height:14px; background:rgba(255,255,255,.06); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.1)
+    }
+    .bar > span{
+      display:block; height:100%; width:0%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transition: width .35s ease;
+    }
+    .pct{ min-width:64px; text-align:right; font-variant-numeric: tabular-nums; color:var(--muted) }
+
+    .howto{ color:var(--muted); font-size:14px; line-height:1.5 }
+    .howto ul{ margin:10px 0 0 18px }
+    .chip{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); padding:4px 8px; border-radius:999px; font-size:12px }
+
+    /* challenge mode */
+    .game{
+      display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-items:center
+    }
+    @media (max-width:600px){ .game{ grid-template-columns: 1fr } }
+    .score{
+      display:flex; gap:10px; align-items:center; justify-content:center
+    }
+    .score .num{ font-weight:900; font-size:28px }
+    .timer{ font-weight:800 }
+    .target{ font-weight:800 }
+    .good{ color:var(--accent) }
+    .bad{ color:var(--danger) }
+
+    /* hidden file input */
+    input[type=file]{ display:none }
   </style>
 </head>
 <body>
   <header>
-    <h1>Train Your Own AI — Ball vs Cup</h1>
-    <div class="sub">Kinder–5th • Collect examples, train, then test live with your webcam!</div>
+    <h1>Teachable Machine: <span class="chip">Ball</span> vs <span class="chip">Cup</span></h1>
+    <div class="sub">Kinder–5th • Hold up an object to the camera or upload a photo. The AI will guess!</div>
   </header>
 
   <div class="wrap grid">
-    <!-- LEFT: Camera + Trainer -->
-    <section class="card stage" aria-label="Camera & Trainer">
+    <!-- LEFT: camera / image stage -->
+    <section class="card stage" aria-label="Camera Stage">
       <div class="videoWrap" id="stage">
-        <div class="badge" id="status">Loading MobileNet…</div>
-        <video id="webcam" autoplay playsinline muted></video>
+        <div class="badge" id="status">Loading model…</div>
+        <!-- we attach either webcam canvas or preview canvas here -->
+        <div class="overlay" id="countdown" aria-hidden="true"></div>
       </div>
 
-      <div class="controls" role="group" aria-label="Collect examples">
+      <div class="controls" role="group" aria-label="Controls">
         <button class="primary" id="startCam">🎥 Start Camera</button>
-        <button id="pause">⏸ Pause</button>
-        <button id="resume">▶️ Resume</button>
-        <button class="warn" id="clear">🧹 Clear All</button>
-      </div>
-
-      <div class="controls" role="group" aria-label="Training buttons">
-        <button class="good" id="addBall">➕ Add “Ball” Example (<span class="count" id="cBall">0</span>)</button>
-        <button class="good" id="addCup">➕ Add “Cup” Example (<span class="count" id="cCup">0</span>)</button>
-        <button id="train">🏁 Start Predicting</button>
+        <button class="warn" id="stopCam">⏹ Stop Camera</button>
+        <button id="snap">📸 3-2-1 Snap</button>
         <label class="button" for="file">🖼 Upload Photo</label>
         <input id="file" type="file" accept="image/*" />
-        <button class="danger" id="download">⬇️ Save Classifier</button>
-        <label class="button" for="upload">⬆️ Load Classifier</label>
-        <input id="upload" type="file" accept="application/json" />
+        <button class="ghost" id="pause">⏸ Pause</button>
+        <button class="ghost" id="resume">▶️ Resume</button>
+        <button class="ghost" id="reset">♻️ Reset</button>
       </div>
 
       <div class="howto">
-        <strong>How it works:</strong>
+        <strong>Tips:</strong>
         <ul>
-          <li>Hold a <em>ball</em> in front of the camera and press “Add Ball Example” a few times (5–20).</li>
-          <li>Do the same for a <em>cup</em>.</li>
-          <li>Press “Start Predicting” and watch the bars move!</li>
-          <li>No camera? Upload a photo instead.</li>
+          <li>Fill the frame with your object. Keep steady.</li>
+          <li>Good light helps! Try not to block the camera.</li>
+          <li>Try side angles—see if the AI still gets it right.</li>
         </ul>
       </div>
     </section>
 
-    <!-- RIGHT: Predictions -->
+    <!-- RIGHT: predictions + challenge -->
     <aside class="card pred" aria-live="polite" aria-atomic="true">
       <div class="row">
-        <div class="label"><span class="emoji">🏀</span> <span>Ball</span></div>
-        <div class="bar"><span id="barBall"></span></div>
-        <div class="pct" id="pctBall">0%</div>
+        <div class="label"><span class="emoji" id="emoji0">🏀</span><span id="name0">Ball</span></div>
+        <div class="bar"><span id="bar0"></span></div>
+        <div class="pct" id="pct0">0%</div>
       </div>
       <div class="row">
-        <div class="label"><span class="emoji">🥤</span> <span>Cup</span></div>
-        <div class="bar"><span id="barCup"></span></div>
-        <div class="pct" id="pctCup">0%</div>
+        <div class="label"><span class="emoji" id="emoji1">🥤</span><span id="name1">Cup</span></div>
+        <div class="bar"><span id="bar1"></span></div>
+        <div class="pct" id="pct1">0%</div>
+      </div>
+
+      <div class="card" style="background:rgba(255,255,255,.03);">
+        <div class="game">
+          <div style="text-align:center">
+            <div>🎯 Target:</div>
+            <div class="target" id="target">Ball</div>
+            <div style="margin-top:8px">
+              <button id="newTarget">🔀 New Target</button>
+            </div>
+          </div>
+          <div class="score">
+            <div>Score:</div>
+            <div class="num" id="score">0</div>
+            <div class="chip timer" id="timer">30s</div>
+            <button id="startGame">🏁 Start 30-sec Challenge</button>
+          </div>
+        </div>
+        <div class="howto" style="margin-top:8px">
+          Show the <strong>target object</strong> to score +1. Highest score wins!
+        </div>
       </div>
 
       <div class="howto">
-        <strong>What’s happening?</strong> We use a pre-trained vision model (MobileNet) to turn the camera image into a feature vector,
-        then a simple <em>KNN classifier</em> learns your two categories using your examples — training happens on the device, instantly.
+        <strong>What’s happening?</strong> Your camera image is fed into a small neural network (a computer brain) trained on examples of
+        <em>ball</em> vs <em>cup</em>. It outputs the probability for each class. We visualize those as bars above.
       </div>
     </aside>
   </div>
 
   <script>
-    // --- Globals ---
-    let net, classifier, webcamStream = null, paused = false, predicting = false;
-    const video = document.getElementById('webcam');
-    const statusEl = document.getElementById('status');
-    const counts = {Ball:0, Cup:0};
+    // 🔗 1) PASTE YOUR MODEL LINK HERE (must end with a "/")
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/MjZdIoucw/"; // <-- CHANGE ME
 
-    const barBall = document.getElementById('barBall');
-    const barCup  = document.getElementById('barCup');
-    const pctBall = document.getElementById('pctBall');
-    const pctCup  = document.getElementById('pctCup');
+    // 🧠 globals
+    let model, webcam, maxClasses = 0;
+    let running = false, usingWebcam = false, paused = false;
+    let offscreenCanvas, offctx; // for uploaded images / snapshots
+    const statusEl = document.getElementById("status");
+    const stageEl = document.getElementById("stage");
+    const countdownEl = document.getElementById("countdown");
 
-    // --- Utility DOM helpers ---
+    // 🎮 challenge mode
+    let target = "Ball", score = 0, gameTime = 30, gameInterval, gameTick;
+    const targetEl = document.getElementById("target");
+    const scoreEl = document.getElementById("score");
+    const timerEl = document.getElementById("timer");
+    const classesEmoji = {}; // will be filled from metadata order
+
+    // 🧰 buttons
     const $ = id => document.getElementById(id);
-    function setStatus(t, isErr=false){
-      statusEl.textContent = t;
-      statusEl.style.borderColor = isErr ? "rgba(239,68,68,.6)" : "rgba(96,165,250,.5)";
-      statusEl.style.background = isErr ? "rgba(239,68,68,.08)" : "rgba(255,255,255,.08)";
-    }
+    $("startCam").onclick = startCamera;
+    $("stopCam").onclick = stopCamera;
+    $("snap").onclick = snap;
+    $("pause").onclick = () => paused = true;
+    $("resume").onclick = () => paused = false;
+    $("reset").onclick = resetAll;
+    $("file").onchange = onUpload;
+    $("startGame").onclick = startChallenge;
+    $("newTarget").onclick = () => setRandomTarget();
 
-    // --- Load MobileNet + init KNN ---
-    (async function boot(){
+    // 🚀 boot
+    (async function init(){
       try{
-        setStatus("Loading MobileNet…");
-        net = await mobilenet.load({version:2, alpha:1.0}); // higher accuracy
-        classifier = knnClassifier.create();
-        setStatus("Ready. Start the camera and add examples!");
+        status("Loading model…");
+        model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
+        maxClasses = model.getTotalClasses();
+        status("Model loaded ✓  Click “Start Camera” or Upload a Photo");
+
+        // Fill class labels & emojis from metadata order
+        const md = await fetch(MODEL_URL + "metadata.json").then(r => r.json());
+        const names = (md.labels || []).slice(0,2); // expecting 2 classes for this demo
+        // Set defaults if labels missing
+        const label0 = names[0] || "Ball";
+        const label1 = names[1] || "Cup";
+        $("name0").textContent = label0;
+        $("name1").textContent = label1;
+
+        // Nice default emojis (you can tweak)
+        classesEmoji[label0] = "🏀";
+        classesEmoji[label1] = "🥤";
+        $("emoji0").textContent = classesEmoji[label0] || "🟢";
+        $("emoji1").textContent = classesEmoji[label1] || "🔵";
+
+        // prepare offscreen canvas for uploads/snapshots
+        offscreenCanvas = document.createElement("canvas");
+        offscreenCanvas.width = 400; offscreenCanvas.height = 400;
+        offctx = offscreenCanvas.getContext("2d",{alpha:false, desynchronized:true});
+
       }catch(err){
         console.error(err);
-        setStatus("Failed to load model. Check network.", true);
+        status("Error loading model. Check MODEL_URL.", true);
       }
     })();
 
-    // --- Camera controls ---
-    $('startCam').onclick = async () => {
+    // 🎥 camera control
+    async function startCamera(){
       try{
-        if (webcamStream) { webcamStream.getTracks().forEach(t=>t.stop()); }
-        webcamStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
-        video.srcObject = webcamStream;
-        await video.play();
-        setStatus("Camera running. Add examples!");
+        if(webcam){ await webcam.stop(); usingWebcam=false; }
+        const flip = true;
+        webcam = new tmImage.Webcam(400, 400, flip);
+        await webcam.setup(); // permission prompt
+        await webcam.play();
+        usingWebcam = true; paused = false;
+        attachCanvas(webcam.canvas);
+        status("Camera running. Hold up a Ball or a Cup!");
+        if(!running){ running = true; loop(); }
       }catch(err){
-        console.error(err);
-        setStatus("Camera blocked. Use Upload Photo instead.", true);
+        console.error("Camera error:", err);
+        status("Could not start camera. Try Upload Photo.", true);
       }
-    };
-    $('pause').onclick  = () => { paused = true; setStatus("Paused."); };
-    $('resume').onclick = () => { paused = false; setStatus("Resumed."); };
-
-    // --- Capture helpers ---
-    function captureTensorFromVideo(){
-      const tmp = document.createElement('canvas');
-      const size = Math.min(video.videoWidth, video.videoHeight) || 224;
-      tmp.width = 224; tmp.height = 224;
-      const ctx = tmp.getContext('2d');
-      // center-crop to square then shrink to 224x224
-      const sx = ((video.videoWidth  || size) - size)/2;
-      const sy = ((video.videoHeight || size) - size)/2;
-      ctx.drawImage(video, sx, sy, size, size, 0, 0, 224, 224);
-      const img = tf.browser.fromPixels(tmp);
-      return img.expandDims(0); // shape [1,224,224,3]
+    }
+    async function stopCamera(){
+      try{
+        if(webcam){ await webcam.stop(); usingWebcam=false; }
+        status("Camera stopped. You can Upload Photo.");
+      }catch(e){}
     }
 
-    async function addExample(label){
-      if (!net) return;
-      let img;
-      if (video.srcObject && !video.paused && !video.ended) {
-        img = captureTensorFromVideo();
-      } else if (lastUpload) {
-        img = lastUpload.clone();
-      } else {
-        setStatus("No camera feed or uploaded photo.", true);
-        return;
+    function attachCanvas(canvas){
+      // remove previous visuals
+      [...stageEl.querySelectorAll("canvas, video, img")].forEach(n => n.remove());
+      canvas.style.display="block";
+      stageEl.appendChild(canvas);
+    }
+
+    // 📸 3-2-1 countdown + snapshot (works for both webcam & uploads)
+    async function snap(){
+      countdown(3);
+      await wait(1200);
+      countdown(2);
+      await wait(1000);
+      countdown(1);
+      await wait(800);
+      countdown(""); // clear
+
+      // draw current source into offscreen
+      if(usingWebcam && webcam){
+        offctx.drawImage(webcam.canvas, 0, 0, 400, 400);
+      }else{
+        // if no webcam, we keep last uploaded image (already on offscreen)
+        if(!offscreenCanvas) return;
       }
-      const activation = net.infer(img, 'conv_preds');
-      classifier.addExample(activation, label);
-      img.dispose();
-      counts[label]++; updateCounts();
+      // place a visible copy on stage
+      const snapCanvas = document.createElement("canvas");
+      snapCanvas.width=400; snapCanvas.height=400;
+      snapCanvas.getContext("2d").drawImage(offscreenCanvas,0,0,400,400);
+      attachCanvas(snapCanvas);
+
+      // run one prediction immediately
+      const preds = await model.predict(offscreenCanvas);
+      renderPreds(preds);
+      confettiBurst();
     }
 
-    function updateCounts(){
-      $('cBall').textContent = counts.Ball;
-      $('cCup').textContent  = counts.Cup;
-    }
-
-    // --- Upload photo (fallback or supplement) ---
-    let lastUpload = null;
-    $('file').onchange = async (e)=>{
-      const file = e.target.files?.[0];
+    // 🖼 upload flow
+    function onUpload(ev){
+      const file = ev.target.files?.[0];
       if(!file) return;
-      const imgEl = new Image();
-      imgEl.onload = async ()=>{
-        const tmp = document.createElement('canvas');
-        const size = Math.min(imgEl.width, imgEl.height);
-        tmp.width = 224; tmp.height = 224;
-        tmp.getContext('2d').drawImage(
-          imgEl,
-          (imgEl.width-size)/2, (imgEl.height-size)/2, size, size,
-          0, 0, 224, 224
-        );
-        lastUpload?.dispose?.();
-        lastUpload = tf.browser.fromPixels(tmp).expandDims(0);
-        setStatus("Photo ready. Add examples or start predicting.");
+      const img = new Image();
+      img.onload = ()=>{
+        // center-crop into offscreen 400x400
+        const {width:w,height:h}=img;
+        const size = Math.min(w,h);
+        const sx = (w-size)/2, sy=(h-size)/2;
+        offctx.drawImage(img, sx, sy, size, size, 0,0,400,400);
+        // show on stage
+        const show = document.createElement("canvas");
+        show.width=400; show.height=400;
+        show.getContext("2d").drawImage(offscreenCanvas,0,0);
+        attachCanvas(show);
+        status("Photo loaded. Click 3-2-1 Snap or Start Camera.");
+        predictOnce();
       };
-      imgEl.src = URL.createObjectURL(file);
-    };
+      img.src = URL.createObjectURL(file);
+    }
 
-    // --- Buttons to add examples ---
-    $('addBall').onclick = ()=> addExample('Ball');
-    $('addCup').onclick  = ()=> addExample('Cup');
+    async function predictOnce(){
+      const src = usingWebcam && webcam ? webcam.canvas : offscreenCanvas;
+      if(!src) return;
+      const preds = await model.predict(src);
+      renderPreds(preds);
+    }
 
-    // --- Clear / Reset ---
-    $('clear').onclick = ()=>{
-      classifier = knnClassifier.create();
-      counts.Ball = counts.Cup = 0;
-      updateCounts();
-      setStatus("Cleared. Add new examples!");
-    };
-
-    // --- Save / Load classifier (optional) ---
-    $('download').onclick = async ()=>{
-      const dataset = classifier.getClassifierDataset();
-      const entries = Object.entries(dataset).map(([k, v]) => [k, Array.from(v.dataSync())]);
-      const json = JSON.stringify(entries);
-      const blob = new Blob([json], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'knn-classifier.json';
-      a.click();
-    };
-    $('upload').onchange = async (e)=>{
-      const file = e.target.files?.[0];
-      if(!file) return;
-      const text = await file.text();
-      const entries = JSON.parse(text);
-      const dataset = {};
-      entries.forEach(([k, arr])=>{
-        const tensor = tf.tensor(arr, [arr.length/1024, 1024]); // conv_preds size for MobileNet v2
-        dataset[k] = tensor;
-      });
-      classifier.setClassifierDataset(dataset);
-      // Make a guess at counts (not exact, but fine for demo)
-      counts.Ball = dataset['0'] ? dataset['0'].shape[0] : counts.Ball;
-      counts.Cup  = dataset['1'] ? dataset['1'].shape[0] : counts.Cup;
-      updateCounts();
-      setStatus("Classifier loaded. Start predicting!");
-    };
-
-    // --- Start Predicting (loop) ---
-    $('train').onclick = ()=>{
-      if (classifier.getNumClasses() < 2) {
-        setStatus("Add examples for BOTH classes first.", true);
-        return;
-      }
-      predicting = true;
-      setStatus("Predicting… show the object!");
-      loop();
-    };
-
+    // 🔁 main loop for live webcam prediction
     async function loop(){
-      if (!predicting) return;
-      if (!paused) {
-        let img;
-        if (video.srcObject && !video.paused && !video.ended) {
-          img = captureTensorFromVideo();
-        } else if (lastUpload) {
-          img = lastUpload.clone();
-        }
-        if (img) {
-          const activation = net.infer(img, 'conv_preds');
-          const result = await classifier.predictClass(activation, 3); // top-k = 3
-          render(result);
-          img.dispose();
-        }
+      if(!running) return;
+      if(usingWebcam && webcam && !paused){
+        webcam.update();
+        const preds = await model.predict(webcam.canvas);
+        renderPreds(preds);
+        maybeScore(preds);
       }
       requestAnimationFrame(loop);
     }
 
-    function render(result){
-      // result.label is "Ball" or "Cup"
-      // result.confidencesByLabel like {Ball:0.87, Cup:0.13}
-      const cb = result.confidencesByLabel || {};
-      const pBall = Math.max(0, Math.min(1, cb['Ball'] || 0));
-      const pCup  = Math.max(0, Math.min(1, cb['Cup']  || 0));
-      barBall.style.width = (pBall*100).toFixed(1) + '%';
-      barCup.style.width  = (pCup*100).toFixed(1) + '%';
-      pctBall.textContent = (pBall*100).toFixed(1) + '%';
-      pctCup.textContent  = (pCup*100).toFixed(1) + '%';
-      setStatus(`Best: ${result.label} • ${(Math.max(pBall,pCup)*100).toFixed(1)}%`);
+    // 📊 UI for predictions
+    function renderPreds(preds){
+      // sort by probability desc for nicer display
+      const sorted = [...preds].sort((a,b)=>b.probability-a.probability);
+      // place top two into our fixed rows (handles unknown label order)
+      const names=[ $("name0").textContent, $("name1").textContent ];
+      const map = Object.fromEntries(sorted.map(p=>[p.className,p.probability]));
+      names.forEach((name, i)=>{
+        const p = Math.max(0, Math.min(1, map[name] ?? 0));
+        $("bar"+i).style.width = (p*100).toFixed(1) + "%";
+        $("pct"+i).textContent = (p*100).toFixed(1) + "%";
+      });
+      // set emojis (optional: bold winning)
+      const best = sorted[0];
+      if(classesEmoji[best.className]){
+        const idx = names.indexOf(best.className);
+        if(idx===0){ $("emoji0").textContent = classesEmoji[best.className]; }
+        if(idx===1){ $("emoji1").textContent = classesEmoji[best.className]; }
+      }
+      // live status
+      status(best.className + " • " + (best.probability*100).toFixed(1) + "%");
+    }
+
+    // 🧪 Challenge mode helpers
+    function setRandomTarget(){
+      const choices = [ $("name0").textContent, $("name1").textContent ];
+      target = choices[Math.floor(Math.random()*choices.length)];
+      targetEl.textContent = target;
+    }
+    function startChallenge(){
+      score = 0; scoreEl.textContent = score;
+      setRandomTarget();
+      let t = gameTime; timerEl.textContent = t + "s";
+      clearInterval(gameInterval); clearInterval(gameTick);
+      gameTick = setInterval(()=>{ if(t>0){ t--; timerEl.textContent = t + "s"; } },1000);
+      gameInterval = setTimeout(()=>{
+        timerEl.textContent = "Time!";
+        clearInterval(gameTick);
+      }, gameTime*1000);
+    }
+    function maybeScore(preds){
+      if(!preds) return;
+      const best = preds.reduce((a,b)=> a.probability>b.probability?a:b);
+      if(timerEl.textContent.endsWith("s") && best.className === target && best.probability>=0.85){
+        score++; scoreEl.textContent = score;
+        confettiBurst();
+        setRandomTarget();
+        // small cooldown to prevent multi-scoring per frame
+        const saved = timerEl.textContent;
+        timerEl.textContent = saved.replace("s","");
+        setTimeout(()=>{ timerEl.textContent = saved; }, 400);
+      }
+    }
+
+    // 🧼 misc
+    function resetAll(){
+      paused=false; score=0; scoreEl.textContent = score;
+      setRandomTarget(); status("Reset. Ready!");
+    }
+    function countdown(n){ countdownEl.textContent = n || ""; }
+    function status(msg, isError=false){
+      statusEl.textContent = msg;
+      statusEl.style.borderColor = isError ? "rgba(239,68,68,.6)" : "rgba(96,165,250,.5)";
+      statusEl.style.background = isError ? "rgba(239,68,68,.08)" : "rgba(255,255,255,.08)";
+    }
+    const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
+
+    // 🎉 tiny confetti without external libs
+    function confettiBurst(){
+      const c = document.createElement("canvas");
+      c.width = stageEl.clientWidth; c.height = stageEl.clientHeight;
+      c.style.position="absolute"; c.style.inset=0; c.style.pointerEvents="none";
+      stageEl.appendChild(c);
+      const ctx = c.getContext("2d");
+      const parts = Array.from({length: 80}, ()=>({
+        x: Math.random()*c.width,
+        y: -10 - Math.random()*50,
+        dx: (Math.random()-0.5)*2,
+        dy: 2 + Math.random()*3,
+        s: 4 + Math.random()*4,
+        a: 1
+      }));
+      let t=0;
+      (function anim(){
+        ctx.clearRect(0,0,c.width,c.height);
+        parts.forEach(p=>{
+          p.x += p.dx; p.y += p.dy; p.a -= 0.01;
+          ctx.globalAlpha = Math.max(0,p.a);
+          ctx.fillStyle = `hsl(${(p.x+p.y)%360},90%,60%)`;
+          ctx.fillRect(p.x,p.y,p.s,p.s);
+        });
+        t++; if(t<90){ requestAnimationFrame(anim); } else c.remove();
+      })();
     }
   </script>
 </body>
