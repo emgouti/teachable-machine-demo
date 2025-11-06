@@ -1,69 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Teachable Machine Web App</title>
-
-  <!-- Load TensorFlow.js and Teachable Machine libraries -->
+  <meta charset="UTF-8">
+  <title>Teachable Machine Camera Fix</title>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.13.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
-
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #fafafa;
-      text-align: center;
-      padding: 40px;
-    }
-    h1 {
-      margin-bottom: 16px;
-    }
-    #webcam-container {
-      margin: 20px auto;
-    }
-    video, canvas {
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    #label-container div {
-      margin: 6px;
-      font-size: 1.1em;
-    }
+    body { text-align: center; font-family: sans-serif; }
+    canvas { background-color: #222; border-radius: 8px; }
   </style>
 </head>
-
 <body>
   <h1>Teachable Machine Demo</h1>
-
   <div id="webcam-container"></div>
   <div id="label-container"></div>
 
-  <script type="text/javascript">
-    // Replace this URL with your own model link (must end with /)
-    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/MjZdIoucw/";
+  <script>
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/MjZdIoucw/"; // your model
 
     let model, webcam, labelContainer, maxPredictions;
 
     async function init() {
-      const modelURL = MODEL_URL + "model.json";
-      const metadataURL = MODEL_URL + "metadata.json";
-
-      // Load the model and metadata
-      model = await tmImage.load(modelURL, metadataURL);
+      model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
       maxPredictions = model.getTotalClasses();
 
-      // Setup webcam
       const flip = true;
-      webcam = new tmImage.Webcam(224, 224, flip);
-      await webcam.setup(); // prompts for camera access
+      webcam = new tmImage.Webcam(400, 400, flip);
+      await webcam.setup();
       await webcam.play();
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
       window.requestAnimationFrame(loop);
 
-      // Attach webcam to DOM
-      document.getElementById("webcam-container").appendChild(webcam.canvas);
-
-      // Create prediction labels
       labelContainer = document.getElementById("label-container");
       for (let i = 0; i < maxPredictions; i++) {
         labelContainer.appendChild(document.createElement("div"));
@@ -81,11 +48,10 @@
       for (let i = 0; i < maxPredictions; i++) {
         const classPrediction =
           prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
-        labelContainer.childNodes[i].innerHTML = classPrediction;
+        labelContainer.childNodes[i].innerText = classPrediction;
       }
     }
 
-    // Initialize the app
     init();
   </script>
 </body>
