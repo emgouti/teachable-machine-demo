@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Teachable Machine Web App</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.13.0"></script>
+</head>
+<body>
+  <h1>Teachable Machine Demo</h1>
+  <video id="webcam" autoplay playsinline width="224" height="224"></video>
+  <p id="result">Loading model...</p>
+
+  <script type="module">
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/abc123/"; // your URL
+    const model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
+    const webcam = new tmImage.Webcam(224, 224, true);
+    await webcam.setup();
+    await webcam.play();
+    document.body.appendChild(webcam.canvas);
+
+    async function loop() {
+      webcam.update();
+      const prediction = await model.predict(webcam.canvas);
+      const best = prediction.reduce((a, b) => a.probability > b.probability ? a : b);
+      document.getElementById("result").textContent = `${best.className} (${(best.probability*100).toFixed(1)}%)`;
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+</body>
+</html>
