@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>STEM Night – Teachable Machine: Farm Animals</title>
+  <title>Travis STEM Night 2025 – Teachable Machine: Farm Animals</title>
 
-  <!-- TFJS + Teachable Machine (Image) -->
+  <!-- TFJS + Teachable Machine -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.13.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
@@ -35,22 +35,14 @@
       border-radius:16px; padding:16px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
-
-    /* left column */
-    .stage{
-      display:grid; gap:12px;
-      grid-template-rows: auto 1fr auto;
-      min-height:520px;
-    }
+    .stage{ display:grid; gap:12px; grid-template-rows: auto 1fr auto; min-height:520px; }
     .videoWrap{
       position:relative; border-radius:16px; overflow:hidden;
       background:#000; min-height:320px; display:flex; align-items:center; justify-content:center;
     }
     canvas, video{max-width:100%; height:auto; display:block}
-    .badge{
-      position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.1);
-      border:1px solid rgba(255,255,255,0.2); padding:6px 10px; border-radius:999px; font-size:12px
-    }
+    .badge{ position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.1);
+      border:1px solid rgba(255,255,255,0.2); padding:6px 10px; border-radius:999px; font-size:12px }
     .overlay{
       position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center;
       font-size:min(18vw,120px); font-weight:900; letter-spacing:1px;
@@ -64,7 +56,6 @@
       background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
       font-size:clamp(14px,2.5vw,18px)
     }
-
     .controls{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center }
     button, label.button{
       background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
@@ -78,7 +69,6 @@
     button.warn{ border-color:rgba(245,158,11,.6); }
     button.ghost{ background:transparent; border-color:rgba(255,255,255,.12) }
 
-    /* right column: predictions */
     .pred{ display:grid; gap:14px; }
     .row{
       display:grid; grid-template-columns: auto 1fr auto; gap:10px; align-items:center;
@@ -88,12 +78,7 @@
     .emoji{ font-size:28px }
     .bar{ width:100%; height:14px; background:rgba(255,255,255,.06); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.1) }
     .bar > span{ display:block; height:100%; width:0%; transition: width .35s ease }
-    .bar.hen   > span{ background:linear-gradient(90deg, var(--pink), var(--a)); }
-    .bar.cow   > span{ background:linear-gradient(90deg, #facc15, var(--b)); }
-    .bar.sheep > span{ background:linear-gradient(90deg, var(--vio), var(--a)); }
-    .bar.horse > span{ background:linear-gradient(90deg, #34d399, var(--b)); }
     .pct{ min-width:64px; text-align:right; font-variant-numeric: tabular-nums; color:var(--muted) }
-
     .howto{ color:var(--muted); font-size:14px; line-height:1.5 }
     .howto ul{ margin:10px 0 0 18px }
     .chip{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); padding:4px 8px; border-radius:999px; font-size:12px }
@@ -102,23 +87,21 @@
 </head>
 <body>
   <header>
-    <h1>Teachable Machine: <span class="chip">Hen</span> • <span class="chip">Cow</span> • <span class="chip">Sheep</span> • <span class="chip">Horse</span></h1>
-    <div class="sub">Kinder–5th • Hold up an animal picture/toy to the camera or upload a photo. The AI will guess!</div>
+    <h1>Teachable Machine:</h1>
+    <div class="sub">Hold up an animal picture/toy to the camera. The machine learning model will guess!</div>
   </header>
 
   <div class="wrap grid">
-    <!-- LEFT: camera / image stage -->
     <section class="card stage" aria-label="Camera Stage">
       <div class="videoWrap" id="stage">
         <div class="badge" id="status">Loading model…</div>
-        <!-- webcam/preview canvas attaches here -->
         <div class="overlay" id="overlay">
-          <div id="overlayText">HEN</div>
+          <div id="overlayText">LABEL</div>
           <div class="overlayTag" id="overlayPct">100%</div>
         </div>
       </div>
 
-      <div class="controls" role="group" aria-label="Controls">
+      <div class="controls">
         <button class="primary" id="startCam">🎥 Start Camera</button>
         <button class="warn" id="stopCam">⏹ Stop Camera</button>
         <button id="snap">📸 3-2-1 Snap</button>
@@ -139,262 +122,124 @@
       </div>
     </section>
 
-    <!-- RIGHT: predictions -->
-    <aside class="card pred" aria-live="polite" aria-atomic="true">
-      <div class="row">
-        <div class="label"><span class="emoji" id="emoji0">🐔</span><span id="name0">Hen</span></div>
-        <div class="bar hen"><span id="bar0"></span></div>
-        <div class="pct" id="pct0">0%</div>
-      </div>
-      <div class="row">
-        <div class="label"><span class="emoji" id="emoji1">🐄</span><span id="name1">Cow</span></div>
-        <div class="bar cow"><span id="bar1"></span></div>
-        <div class="pct" id="pct1">0%</div>
-      </div>
-      <div class="row">
-        <div class="label"><span class="emoji" id="emoji2">🐑</span><span id="name2">Sheep</span></div>
-        <div class="bar sheep"><span id="bar2"></span></div>
-        <div class="pct" id="pct2">0%</div>
-      </div>
-      <div class="row">
-        <div class="label"><span class="emoji" id="emoji3">🐎</span><span id="name3">Horse</span></div>
-        <div class="bar horse"><span id="bar3"></span></div>
-        <div class="pct" id="pct3">0%</div>
-      </div>
-
-      <div class="howto">
-        <strong>What’s happening?</strong> Your camera image is fed into a neural network trained on <em>hen</em>, <em>cow</em>,
-        <em>sheep</em>, and <em>horse</em>. We show the confidence for each and pop a big label when the AI is sure.
-      </div>
-    </aside>
+    <aside class="card pred" id="predictions"></aside>
   </div>
 
   <script>
-    // 🔗 PASTE YOUR MODEL LINK HERE (must end with a "/")
-    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/xc-B8YuD7/"; // <-- CHANGE ME
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/xc-B8YuD7/"; // <-- Replace with your model URL
+    const THRESHOLD = 0.75, EMA_ALPHA = 0.35, LOCK_MS = 1000, LOOP_MS = 160;
 
-    // Kid-friendly behavior tuning
-    const THRESHOLD = 0.75;   // show big label at or above 75%
-    const EMA_ALPHA = 0.35;   // smoothing for calmer bars (0..1, lower = smoother)
-    const LOCK_MS  = 1000;    // hold big label for 1s once shown
-    const LOOP_MS  = 160;     // update cadence (~6 fps visual)
-
-    // Globals
-    let model, webcam, running = false, usingWebcam = false, paused = false;
+    let model, webcam, running=false, usingWebcam=false, paused=false;
     let offscreenCanvas, offctx;
-    let classNames = ["Hen","Horse","Sheep","Cow","Box"];
-    const classEmojis = {
-      "Hen":   "🐔",
-      "Horse": "🐎",
-      "Sheep": "🐑",
-      "Cow":   "🐄",
-      "Box":   "📦"
-    };
-    const ema = {}; // smoothed probabilities
-    let overlayLockedUntil = 0;
-    const statusEl = document.getElementById("status");
-    const stageEl = document.getElementById("stage");
-    const overlayEl = document.getElementById("overlay");
-    const overlayText = document.getElementById("overlayText");
-    const overlayPct  = document.getElementById("overlayPct");
-    const countdownEl = null; // not used here
+    let classNames = [];
+    const classEmojis = {"Hen":"🐔","Horse":"🐎","Sheep":"🐑","Cow":"🐄","Box":"📦"};
+    const ema={}, stageEl=document.getElementById("stage");
+    const overlayEl=document.getElementById("overlay"),overlayText=document.getElementById("overlayText"),overlayPct=document.getElementById("overlayPct");
+    const statusEl=document.getElementById("status");
+    const $=id=>document.getElementById(id);
+    $("startCam").onclick=startCamera; $("stopCam").onclick=stopCamera;
+    $("snap").onclick=snap; $("pause").onclick=()=>paused=true;
+    $("resume").onclick=()=>paused=false; $("reset").onclick=resetAll;
+    $("file").onchange=onUpload;
 
-    const $ = id => document.getElementById(id);
-    $("startCam").onclick = startCamera;
-    $("stopCam").onclick = stopCamera;
-    $("snap").onclick = snap;
-    $("pause").onclick = () => paused = true;
-    $("resume").onclick = () => paused = false;
-    $("reset").onclick = resetAll;
-    $("file").onchange = onUpload;
-
-    // Boot
     (async function init(){
       try{
         status("Loading model…");
         model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
-        status("Model loaded ✓  Click “Start Camera” or Upload a Photo");
-
-        // Try to read labels from metadata; else keep defaults
-        const md = await fetch(MODEL_URL + "metadata.json").then(r => r.json());
-        if (Array.isArray(md.labels) && md.labels.length >= 4) {
-          classNames = md.labels.slice(0,4);
-        }
-        // Set names + emojis
-        classNames.forEach((name, i)=>{
-          const elName = $("name"+i);
-          const elEmoji = $("emoji"+i);
-          if (elName)  elName.textContent = name;
-          if (elEmoji) elEmoji.textContent = classEmojis[name] || "🟢";
-          ema[name] = 0;
-        });
-
-        // Prepare offscreen canvas (for uploads/snapshots)
-        offscreenCanvas = document.createElement("canvas");
-        offscreenCanvas.width = 400; offscreenCanvas.height = 400;
-        offctx = offscreenCanvas.getContext("2d",{alpha:false, desynchronized:true});
-      }catch(err){
-        console.error(err);
-        status("Error loading model. Check MODEL_URL.", true);
-      }
+        const md = await fetch(MODEL_URL + "metadata.json").then(r=>r.json());
+        if(Array.isArray(md.labels)) classNames = md.labels;
+        status("Model loaded ✓ Click “Start Camera” or Upload a Photo");
+        setupPredictionsPanel();
+        offscreenCanvas=document.createElement("canvas"); offscreenCanvas.width=400; offscreenCanvas.height=400;
+        offctx=offscreenCanvas.getContext("2d",{alpha:false,desynchronized:true});
+        classNames.forEach(n=>ema[n]=0);
+      }catch(err){console.error(err);status("Error loading model. Check MODEL_URL.",true);}
     })();
 
-    // Camera control
+    function setupPredictionsPanel(){
+      const predDiv=document.getElementById("predictions");
+      predDiv.innerHTML="";
+      classNames.forEach((name,i)=>{
+        const row=document.createElement("div");
+        row.className="row";
+        row.innerHTML=`<div class="label"><span class="emoji" id="emoji${i}">${classEmojis[name]||"🟢"}</span><span id="name${i}">${name}</span></div>
+                       <div class="bar"><span id="bar${i}"></span></div>
+                       <div class="pct" id="pct${i}">0%</div>`;
+        predDiv.appendChild(row);
+      });
+    }
+
     async function startCamera(){
       try{
-        if(webcam){ await webcam.stop(); usingWebcam=false; }
-        const flip = true;
-        webcam = new tmImage.Webcam(400, 400, flip);
-        await webcam.setup();
-        await webcam.play();
-        usingWebcam = true; paused = false;
+        if(webcam){await webcam.stop();usingWebcam=false;}
+        webcam=new tmImage.Webcam(400,400,true);
+        await webcam.setup(); await webcam.play();
+        usingWebcam=true; paused=false;
         attachCanvas(webcam.canvas);
         status("Camera running. Show an animal!");
-        if(!running){ running = true; loop(); }
-      }catch(err){
-        console.error("Camera error:", err);
-        status("Could not start camera. Try Upload Photo.", true);
-      }
+        if(!running){running=true;loop();}
+      }catch(err){console.error(err);status("Could not start camera.",true);}
     }
-    async function stopCamera(){
-      try{
-        if(webcam){ await webcam.stop(); usingWebcam=false; }
-        status("Camera stopped. You can Upload Photo.");
-        hideOverlay(true);
-      }catch(e){}
-    }
-
-    function attachCanvas(canvas){
-      [...stageEl.querySelectorAll("canvas, video, img")].forEach(n => n.remove());
-      canvas.style.display="block";
-      stageEl.appendChild(canvas);
-    }
-
-    // Upload flow
-    function onUpload(ev){
-      const file = ev.target.files?.[0];
-      if(!file) return;
-      const img = new Image();
-      img.onload = ()=>{
-        const {width:w,height:h}=img;
-        const size = Math.min(w,h);
-        const sx = (w-size)/2, sy=(h-size)/2;
-        offctx.drawImage(img, sx, sy, size, size, 0,0,400,400);
-        const show = document.createElement("canvas");
-        show.width=400; show.height=400;
+    async function stopCamera(){ if(webcam){await webcam.stop();usingWebcam=false;} status("Camera stopped."); hideOverlay(true); }
+    function attachCanvas(c){[...stageEl.querySelectorAll("canvas, video, img")].forEach(n=>n.remove());c.style.display="block";stageEl.appendChild(c);}
+    function onUpload(e){
+      const f=e.target.files?.[0]; if(!f)return;
+      const img=new Image(); img.onload=()=>{
+        const {width:w,height:h}=img; const s=Math.min(w,h);
+        offctx.drawImage(img,(w-s)/2,(h-s)/2,s,s,0,0,400,400);
+        const show=document.createElement("canvas"); show.width=400; show.height=400;
         show.getContext("2d").drawImage(offscreenCanvas,0,0);
-        attachCanvas(show);
-        status("Photo loaded. Click Snap or Start Camera.");
-        predictOnce();
-      };
-      img.src = URL.createObjectURL(file);
+        attachCanvas(show); status("Photo loaded. Click Snap."); predictOnce();
+      }; img.src=URL.createObjectURL(f);
     }
-
     async function predictOnce(){
-      const src = usingWebcam && webcam ? webcam.canvas : offscreenCanvas;
-      if(!src) return;
-      const preds = await model.predict(src);
-      renderPreds(preds, true);
+      const src=usingWebcam&&webcam?webcam.canvas:offscreenCanvas; if(!src)return;
+      const preds=await model.predict(src); renderPreds(preds,true);
     }
-
-    // 3-2-1 Snap (simple: just predict once and celebrate)
-    async function snap(){
-      await predictOnce();
-      confettiBurst();
-    }
-
-    // Main loop
+    async function snap(){await predictOnce();confettiBurst();}
     async function loop(){
-      if(!running) return;
-      if(usingWebcam && webcam && !paused){
+      if(!running)return;
+      if(usingWebcam&&webcam&&!paused){
         webcam.update();
-        const preds = await model.predict(webcam.canvas);
-        renderPreds(preds, false);
+        const preds=await model.predict(webcam.canvas);
+        renderPreds(preds,false);
       }
-      setTimeout(loop, LOOP_MS);
+      setTimeout(loop,LOOP_MS);
     }
-
-    // Rendering
-    function renderPreds(preds, fromSnap=false){
-      // map predictions
-      const map = Object.fromEntries(preds.map(p=>[p.className, p.probability]));
-      // update smoothing + bars
-      classNames.forEach((name, i)=>{
-        const p = Math.max(0, Math.min(1, map[name] ?? 0));
-        ema[name] = EMA_ALPHA*p + (1-EMA_ALPHA)*(ema[name] ?? 0);
-        const pct = (ema[name]*100).toFixed(1) + "%";
-        const bar = $("bar"+i);
-        const pctEl = $("pct"+i);
-        if (bar)  bar.style.width = pct;
-        if (pctEl) pctEl.textContent = pct;
+    function renderPreds(preds,fromSnap=false){
+      const map=Object.fromEntries(preds.map(p=>[p.className,p.probability]));
+      classNames.forEach((n,i)=>{
+        const p=Math.max(0,Math.min(1,map[n]??0));
+        ema[n]=EMA_ALPHA*p+(1-EMA_ALPHA)*(ema[n]??0);
+        const pct=(ema[n]*100).toFixed(1)+"%";
+        const bar=$("bar"+i),pctEl=$("pct"+i);
+        if(bar)bar.style.width=pct; if(pctEl)pctEl.textContent=pct;
       });
-
-      // determine best class (using smoothed probs)
-      const best = classNames
-        .map(n => ({name:n, p: ema[n] ?? 0}))
-        .sort((a,b)=>b.p-a.p)[0];
-
-      // status text
-      status(best.name + " • " + Math.round(best.p*100) + "%");
-
-      // pop big overlay when confident
-      const now = performance.now();
-      if (best.p >= THRESHOLD && now >= overlayLockedUntil) {
-        showOverlay(best.name, best.p);
-        overlayLockedUntil = now + LOCK_MS;
-        if (fromSnap) confettiBurst();
-      }
+      const best=classNames.map(n=>({name:n,p:ema[n]??0})).sort((a,b)=>b.p-a.p)[0];
+      status(best.name+" • "+Math.round(best.p*100)+"%");
+      const now=performance.now();
+      if(best.p>=THRESHOLD){showOverlay(best.name,best.p); if(fromSnap)confettiBurst();}
     }
-
-    function showOverlay(label, p){
-      overlayText.textContent = label.toUpperCase();
-      overlayPct.textContent  = Math.round(p*100) + "%";
+    function showOverlay(label,p){
+      overlayText.textContent=label.toUpperCase();
+      overlayPct.textContent=Math.round(p*100)+"%";
       overlayEl.classList.add("show");
-      // auto hide after lock period (soft fade)
-      setTimeout(()=>overlayEl.classList.remove("show"), LOCK_MS);
+      setTimeout(()=>overlayEl.classList.remove("show"),LOCK_MS);
     }
-    function hideOverlay(immediate=false){
-      if (immediate) overlayEl.classList.remove("show");
+    function hideOverlay(i=false){if(i)overlayEl.classList.remove("show");}
+    function resetAll(){paused=false;hideOverlay(true);status("Reset.");classNames.forEach(n=>ema[n]=0);}
+    function status(msg,e=false){statusEl.textContent=msg;
+      statusEl.style.borderColor=e?"rgba(239,68,68,.6)":"rgba(96,165,250,.5)";
+      statusEl.style.background=e?"rgba(239,68,68,.08)":"rgba(255,255,255,.08)";
     }
-
-    // Misc
-    function resetAll(){
-      paused=false; hideOverlay(true);
-      status("Reset. Ready!");
-      classNames.forEach(n=>ema[n]=0);
-    }
-    function status(msg, isError=false){
-      statusEl.textContent = msg;
-      statusEl.style.borderColor = isError ? "rgba(239,68,68,.6)" : "rgba(96,165,250,.5)";
-      statusEl.style.background = isError ? "rgba(239,68,68,.08)" : "rgba(255,255,255,.08)";
-    }
-
-    // confetti (tiny, no libs)
     function confettiBurst(){
-      const c = document.createElement("canvas");
-      c.width = stageEl.clientWidth; c.height = stageEl.clientHeight;
-      c.style.position="absolute"; c.style.inset=0; c.style.pointerEvents="none";
-      stageEl.appendChild(c);
-      const ctx = c.getContext("2d");
-      const parts = Array.from({length: 90}, ()=>({
-        x: Math.random()*c.width,
-        y: -10 - Math.random()*50,
-        dx: (Math.random()-0.5)*2,
-        dy: 2 + Math.random()*3,
-        s: 4 + Math.random()*4,
-        a: 1
-      }));
-      let t=0;
-      (function anim(){
-        ctx.clearRect(0,0,c.width,c.height);
-        parts.forEach(p=>{
-          p.x += p.dx; p.y += p.dy; p.a -= 0.01;
-          ctx.globalAlpha = Math.max(0,p.a);
-          ctx.fillStyle = `hsl(${(p.x+p.y)%360},90%,60%)`;
-          ctx.fillRect(p.x,p.y,p.s,p.s);
-        });
-        t++; if(t<100){ requestAnimationFrame(anim); } else c.remove();
-      })();
+      const c=document.createElement("canvas");c.width=stageEl.clientWidth;c.height=stageEl.clientHeight;
+      c.style.position="absolute";c.style.inset=0;c.style.pointerEvents="none";stageEl.appendChild(c);
+      const ctx=c.getContext("2d");const parts=Array.from({length:90},()=>({x:Math.random()*c.width,y:-10-Math.random()*50,dx:(Math.random()-0.5)*2,dy:2+Math.random()*3,s:4+Math.random()*4,a:1}));
+      let t=0;(function anim(){ctx.clearRect(0,0,c.width,c.height);
+        parts.forEach(p=>{p.x+=p.dx;p.y+=p.dy;p.a-=0.01;ctx.globalAlpha=Math.max(0,p.a);
+          ctx.fillStyle=`hsl(${(p.x+p.y)%360},90%,60%)`;ctx.fillRect(p.x,p.y,p.s,p.s);});
+        t++;if(t<100){requestAnimationFrame(anim);}else c.remove();})();
     }
   </script>
 </body>
