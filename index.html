@@ -138,7 +138,7 @@
       try{
         status("Loading model…");
         model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
-        const md = await fetch(MODEL_URL + "metadata.json").then(r=>r.json());
+        const md = await fetch(MODEL_URL + "metadata.json?nocache=" + Date.now()).then(r => r.json());
         if(Array.isArray(md.labels)) classNames = md.labels;
         status("Model loaded ✓ Click “Start Camera” to begin");
         setupPredictionsPanel();
