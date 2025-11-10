@@ -182,8 +182,14 @@
     // Globals
     let model, webcam, running = false, usingWebcam = false, paused = false;
     let offscreenCanvas, offctx;
-    let classNames = ["Hen","Cow","Sheep","Horse"];
-    const classEmojis = {"Hen":"🐔","Cow":"🐄","Sheep":"🐑","Horse":"🐎"};
+    let classNames = ["Hen","Horse","Sheep","Cow","Box"];
+    const classEmojis = {
+      "Hen":   "🐔",
+      "Horse": "🐎",
+      "Sheep": "🐑",
+      "Cow":   "🐄",
+      "Box":   "📦"
+    };
     const ema = {}; // smoothed probabilities
     let overlayLockedUntil = 0;
     const statusEl = document.getElementById("status");
